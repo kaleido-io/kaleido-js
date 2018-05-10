@@ -63,8 +63,8 @@ Chart available at: https://plot.ly/~<PLOT_USER>/51
 ## Example charts created by the tool:
 
 Showing transaction rates per block and per 30sec period aggregates:
-![alt text](https://raw.githubusercontent.com/kaleido-io/kaleido-samples/master/log-analyzers/images/tx-rate.jpg)
+![tx-rates.jpg](images/tx-rates.jpg)
 
 Showing transaction pool status:
-![alt text](https://raw.githubusercontent.com/kaleido-io/kaleido-samples/master/log-analyzers/images/txpool.jpg)
+![txpool status](images/txpool.jpg)
 
