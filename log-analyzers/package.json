@@ -1,0 +1,9 @@
+{
+  "name": "log-analyzers",
+  "version": "0.0.1",
+  "description": "Analyzing logs from blockchain nodes",
+  "dependencies": {
+    "plotly": "^1.0.6",
+    "yargs": "^11.0.0"
+  }
+}
