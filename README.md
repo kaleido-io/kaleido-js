@@ -9,3 +9,6 @@ A simple node.js command line program that demonstrates standard interactions wi
 * submit an externally signed transaction using the web3 wallet module
 * deploy private smart contracts (if the target node is Quorum)
 * submit private transactions (if the target node is Quorum)
+
+## log-analyzers
+A set of tools that parse Geth or Quorum logs to generate line charts for transaction rates and transaction pool status
