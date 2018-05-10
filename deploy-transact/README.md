@@ -35,7 +35,7 @@ node test.js --url=<url of the target node> --deploy --privateFor='["<private tr
 
 **Note:** the privateFor argument value must be delimited with single quotes, and use double quotes for each of the target private addresses, in order for the script to successfully parse
 
-## Send a private transaction
+### Send a private transaction
 ```
 node test.js --url=<url of the target node> --contract=<contract address from the output above> --set=<new value> --privateFor='["<private transaction addresses>"]'
 ```
