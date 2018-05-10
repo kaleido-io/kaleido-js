@@ -1,0 +1,14 @@
+{
+    "name": "quorum-tests",
+    "version": "0.0.1",
+    "description": "Quorum tests",
+    "scripts": {
+        "run": "node ./test.js"
+    },
+    "dependencies": {
+        "ethereumjs-tx": "^1.3.3",
+        "solc": "^0.4.19",
+        "web3": "^1.0.0-beta.34",
+        "yargs": "^11.0.0"
+    }
+}
