@@ -4,7 +4,9 @@ const argv = require('yargs').argv;
 const Web3 = require('web3');
 const Tx = require('ethereumjs-tx');
 const solc = require('solc');
-const fs = require('fs');
+const fs = require('fs-extra');
+const os = require('os');
+const path = require('path');
 
 const contractAddress = argv.contract;
 const url = argv.url;
@@ -14,6 +16,8 @@ const deploy = argv.deploy;
 const set = argv.set;
 const privateFor = argv.privateFor;
 const externallySign = argv.sign;
+const transferIn = argv['transfer-in'];
+const transferOut = argv['transfer-out'];
 
 console.log(`1. Connecting to target node: ${url}`);
 let web3 = new Web3(new Web3.providers.HttpProvider(url));
@@ -88,41 +92,95 @@ if (query) {
   } else {
     nodeSignedTransaction(theContract, newValue);
   }
+} else if (transferIn) {
+  // get ether from 
+  if (!contractAddress) {
+    console.error('For querying smart contract states, you must pass in the contract address using the "--contract=" argument');
+    process.exit(1);
+  }
+
+  let newValue = set;
+  let theContract = getContract(contractAddress);
+
+  if (externallySign) {
+    const abi = theContract.options.jsonInterface;
+    externallySignedTransaction(abi, contractAddress, newValue);
+  } else {
+    nodeSignedTransaction(theContract, newValue);
+  }
 } else if (deploy) {
   let userAccount, sc;
 
-  getAccount().then((account) => {
-    userAccount = account;
-    console.log(`\tFound account in the target node: ${account}`);
-
+  if (externallySign) {
     let theContract = getContract();
+    let deployObj = theContract.encodeABI();
+    console.log(`\tExternally signing the contract deploy`);
+    getLocalAccount().then(async (newAccount) => {
+      let nonce = await web3.eth.getTransactionCount(newAccount.address);
 
-    let params = {
-      from: account,
-      gasPrice: 0,
-      gas: 500000
-    };
+      let params = {
+        from: newAccount,
+        nonce: '0x' + nonce.toString(16),
+        gasPrice: 0,
+        gas: 500000,
+        data: deployObj
+      };
 
-    if (privateFor) {
-      params.privateFor = JSON.parse(privateFor);
-    }
+      let signedTx = new Tx(params);
+      signedTx.sign(Buffer.from(newAccount.privateKey.slice(2), 'hex'));
+      let serializedTx = signedTx.serialize();
 
-    console.log('2. Deploying smart contract');
-    theContract.send(params)
-    .on('receipt', (receipt) => {
-      if (verbose)
-        console.log(receipt);
-    })
-    .on('error', (err) => {
-      console.error('Failed to deploy the smart contract. Error: ' + err);
-      process.exit(1);
-    })
-    .then((newInstance) => {
-      sc = newInstance;
-      // smart contract deployed, ready to invoke it
-      console.log(`\tSmart contract deployed, ready to take calls at "${newInstance._address}"`);
+      let payload = '0x' + serializedTx.toString('hex');
+      console.log(`\n\tSigned payload: ${payload}\n`);
+      web3.eth.sendSignedTransaction(payload)
+      .on('receipt', (receipt) => {
+        if (verbose)
+          console.log(receipt);
+      })
+      .on('error', (err) => {
+        console.error('Failed to deploy the smart contract. Error: ' + err);
+        process.exit(1);
+      })
+      .then((newInstance) => {
+        sc = newInstance;
+        // smart contract deployed, ready to invoke it
+        console.log(`\tSmart contract deployed, ready to take calls at "${newInstance.contractAddress}"`);
+      });
     });
-  });
+  } else {
+    getAccount().then((account) => {
+      userAccount = account;
+      console.log(`\tFound account in the target node: ${account}`);
+
+      let theContract = getContract();
+
+      let params = {
+        from: account,
+        gasPrice: 0,
+        gas: 500000
+      };
+
+      if (privateFor) {
+        params.privateFor = JSON.parse(privateFor);
+      }
+
+      console.log('2. Deploying smart contract');
+      theContract.send(params)
+      .on('receipt', (receipt) => {
+        if (verbose)
+          console.log(receipt);
+      })
+      .on('error', (err) => {
+        console.error('Failed to deploy the smart contract. Error: ' + err);
+        process.exit(1);
+      })
+      .then((newInstance) => {
+        sc = newInstance;
+        // smart contract deployed, ready to invoke it
+        console.log(`\tSmart contract deployed, ready to take calls at "${newInstance._address}"`);
+      });
+    });
+  }
 }
 
 async function getAccount() {
@@ -136,10 +194,12 @@ async function getAccount() {
 }
 
 async function externallySignedTransaction(abi, contractAddress, newValue) {
-  const newAccount = web3.eth.accounts.create();
+  const newAccount = await getLocalAccount();
   const callData = web3.eth.abi.encodeFunctionCall(abi[1], ['' + newValue]); // 2nd function in the abi is the "set"
+  let nonce = await web3.eth.getTransactionCount(newAccount.address);
   let tx = {
     from: newAccount.address,
+    nonce: '0x' + nonce.toString(16),
     to: contractAddress,
     value: '0x0', // required eth transfer value, of course we don't deal with eth balances in private consortia
     data: callData,
@@ -152,10 +212,18 @@ async function externallySignedTransaction(abi, contractAddress, newValue) {
 
   let payload = '0x' + serializedTx.toString('hex');
   console.log(`\n\tSigned payload: ${payload}\n`);
-  await web3.eth.sendSignedTransaction(payload);
+  web3.eth.sendSignedTransaction(payload)
+  .on('receipt', (receipt) => {
+    if (verbose)
+      console.log(receipt);
 
-  console.log(`\tSet new value to ${newValue}`);
-  console.log('\nDONE!\n');
+    console.log(`\tSet new value to ${newValue}`);
+    console.log('\nDONE!\n');
+  })
+  .on('error', (err) => {
+    console.error('Failed to deploy the smart contract. Error: ' + err);
+    process.exit(1);
+  });
 }
 
 async function nodeSignedTransaction(theContract, newValue) {
@@ -176,6 +244,26 @@ async function nodeSignedTransaction(theContract, newValue) {
 
   console.log(`\tNew value set to: ${newValue}`);
   console.log('\nDONE!\n');
+}
+
+async function getLocalAccount() {
+  // look inside the home folder for a previously saved local account
+  let localAccountJSON = path.join(os.homedir(), '.web3keystore', 'local-account.json');
+  await fs.ensureDir(path.join(os.homedir(), '.web3keystore'));
+
+  let account;
+  try {
+    fs.statSync(localAccountJSON);
+    const accountJSON = JSON.parse(fs.readFileSync(localAccountJSON).toString());
+    account = web3.eth.accounts.decrypt(accountJSON, '');
+  } catch(err) {
+    console.log("Local account does not exist. Will be generated.");
+    const account = web3.eth.accounts.create();
+    const accountJSON = web3.eth.accounts.encrypt(account.privateKey, '');
+    fs.writeFileSync(localAccountJSON, JSON.stringify(accountJSON));
+  }
+
+  return account;
 }
 
 module.exports.getContract = getContract;
