@@ -44,3 +44,11 @@ node test.js --url=<url of the target node> --contract=<contract address from th
 ```
 node test.js --sign --url=<url of the target node> --contract=<contract address from the output above> --set=<new value>
 ```
+
+### Use hdwallet account to sign a transaction
+
+**Note:** Kaleido's hdwallet service must be provisioned and a wallet created to use this option
+
+```
+node test.js --sign --hdwalletUrl=<url of the hdwallet service> --hdwalletId=<hdwallet ID> --hdwalletAccountIndex=<account index to anonymize identity> --url=<url of the target node> --contract=<contract address from the output above> --set=<new value>
+```
