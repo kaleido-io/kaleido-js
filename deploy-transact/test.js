@@ -7,9 +7,14 @@ const solc = require('solc');
 const fs = require('fs-extra');
 const os = require('os');
 const path = require('path');
+const request = require('request');
+
 
 const contractAddress = argv.contract;
 const url = argv.url;
+const hdwalletUrl = argv.hdwalletUrl;
+const hdwalletId = argv.hdwalletId;
+const hdwalletAccountIndex = argv.hdwalletAccountIndex;
 const verbose = argv.verbose;
 const query = argv.query;
 const deploy = argv.deploy;
@@ -115,7 +120,7 @@ if (query) {
     let theContract = getContract();
     let deployObj = theContract.encodeABI();
     console.log(`\tExternally signing the contract deploy`);
-    getLocalAccount().then(async (newAccount) => {
+    getSigningAccount().then(async (newAccount) => {
       let nonce = await web3.eth.getTransactionCount(newAccount.address);
 
       let params = {
@@ -127,7 +132,9 @@ if (query) {
       };
 
       let signedTx = new Tx(params);
-      signedTx.sign(Buffer.from(newAccount.privateKey.slice(2), 'hex'));
+      // hdwallet privateKey doesnt need the 0x removed
+      let privateKey = Buffer.from(useHdwallet() ? newAccount.privateKey : newAccount.privateKey.slice(2), 'hex')
+      signedTx.sign(privateKey);
       let serializedTx = signedTx.serialize();
 
       let payload = '0x' + serializedTx.toString('hex');
@@ -194,7 +201,7 @@ async function getAccount() {
 }
 
 async function externallySignedTransaction(abi, contractAddress, newValue) {
-  const newAccount = await getLocalAccount();
+  const newAccount = await getSigningAccount();
   const callData = web3.eth.abi.encodeFunctionCall(abi[1], ['' + newValue]); // 2nd function in the abi is the "set"
   let nonce = await web3.eth.getTransactionCount(newAccount.address);
   let tx = {
@@ -207,7 +214,9 @@ async function externallySignedTransaction(abi, contractAddress, newValue) {
   };
 
   let signedTx = new Tx(tx);
-  signedTx.sign(Buffer.from(newAccount.privateKey.slice(2), 'hex'));
+  // hdwallet privateKey doesnt need the 0x removed
+  let privateKey = Buffer.from(useHdwallet() ? newAccount.privateKey : newAccount.privateKey.slice(2), 'hex')
+  signedTx.sign(privateKey);
   let serializedTx = signedTx.serialize();
 
   let payload = '0x' + serializedTx.toString('hex');
@@ -246,6 +255,13 @@ async function nodeSignedTransaction(theContract, newValue) {
   console.log('\nDONE!\n');
 }
 
+async function getSigningAccount() {
+  if (useHdwallet()) {
+    return await getHdwalletAccount()
+  }
+  return await getLocalAccount()
+}
+
 async function getLocalAccount() {
   // look inside the home folder for a previously saved local account
   let localAccountJSON = path.join(os.homedir(), '.web3keystore', 'local-account.json');
@@ -258,12 +274,29 @@ async function getLocalAccount() {
     account = web3.eth.accounts.decrypt(accountJSON, '');
   } catch(err) {
     console.log("Local account does not exist. Will be generated.");
-    const account = web3.eth.accounts.create();
+    account = web3.eth.accounts.create();
     const accountJSON = web3.eth.accounts.encrypt(account.privateKey, '');
     fs.writeFileSync(localAccountJSON, JSON.stringify(accountJSON));
   }
 
   return account;
+}
+
+function getHdwalletAccount() {
+  console.log('fetching hd wallet account to use')
+  return new Promise(function (resolve, reject) {
+    request(`${hdwalletUrl}/wallets/${hdwalletId}/accounts/${hdwalletAccountIndex}`, function (error, res, body) {
+      if (!error && res.statusCode == 200) {
+        resolve(JSON.parse(body));
+      } else {
+        reject(error);
+      }
+    });
+  });
+}
+
+function useHdwallet() {
+  return hdwalletId && hdwalletUrl && hdwalletAccountIndex >= 0
 }
 
 module.exports.getContract = getContract;
