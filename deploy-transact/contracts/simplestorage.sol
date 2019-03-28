@@ -14,4 +14,8 @@ contract simplestorage {
    function get() public constant returns (uint retVal) {
       return storedData;
    }
+
+   function query() public constant returns (uint retVal) {
+      return storedData;
+   }
 }

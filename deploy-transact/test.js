@@ -21,6 +21,7 @@ const deploy = argv.deploy;
 const set = argv.set;
 const privateFor = argv.privateFor;
 const externallySign = argv.sign;
+const chainId = argv.chainId;
 const transferIn = argv['transfer-in'];
 const transferOut = argv['transfer-out'];
 
@@ -29,11 +30,11 @@ let web3 = new Web3(new Web3.providers.HttpProvider(url));
 
 let contractName = 'simplestorage';
 function getContract(address) {
-  let tsSrc = fs.statSync(`./${contractName}.sol`);
+  let tsSrc = fs.statSync(`./contracts/${contractName}.sol`);
   let tsBin;
 
   try {
-    tsBin = fs.statSync(`./${contractName}.bin`);
+    tsBin = fs.statSync(`./contracts/${contractName}.bin`);
   } catch(err) {
     console.log("Compiled contract does not exist. Will be generated.");
   }
@@ -41,11 +42,11 @@ function getContract(address) {
   let compiled;
   if (!tsBin || tsSrc.mtimeMs > tsBin.mtimeMs) {
     // source file has been modified since the last compile
-    let data = fs.readFileSync(`./${contractName}.sol`);
+    let data = fs.readFileSync(`./contracts/${contractName}.sol`);
     compiled = solc.compile(data.toString(), 1);
-    fs.writeFileSync(`./${contractName}.bin`, JSON.stringify(compiled));
+    fs.writeFileSync(`./contracts/${contractName}.bin`, JSON.stringify(compiled));
   } else {
-    compiled = JSON.parse(fs.readFileSync(`./${contractName}.bin`).toString());
+    compiled = JSON.parse(fs.readFileSync(`./contracts/${contractName}.bin`).toString());
   }
 
   let contract = compiled.contracts[`:${contractName}`];
@@ -75,7 +76,7 @@ if (query) {
   let theContract = getContract(contractAddress);
 
   getAccount().then((account) => {
-    return theContract.methods.get().call();
+    return theContract.methods.query().call();
   })
   .then((value) => {
     console.log('\tSmart contract current state: %j', value);
@@ -130,6 +131,8 @@ if (query) {
         gas: 500000,
         data: deployObj
       };
+
+      if (chainId) params.chainId = chainId;
 
       let signedTx = new Tx(params);
       // hdwallet privateKey doesnt need the 0x removed
@@ -212,6 +215,8 @@ async function externallySignedTransaction(abi, contractAddress, newValue) {
     data: callData,
     gas: 500000
   };
+
+  if (chainId) params.chainId = chainId;
 
   let signedTx = new Tx(tx);
   // hdwallet privateKey doesnt need the 0x removed
