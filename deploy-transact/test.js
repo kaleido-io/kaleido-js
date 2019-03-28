@@ -128,7 +128,7 @@ if (query) {
         from: newAccount,
         nonce: '0x' + nonce.toString(16),
         gasPrice: 0,
-        gas: 500000,
+        gas: 700000,
         data: deployObj
       };
 
@@ -216,7 +216,7 @@ async function externallySignedTransaction(abi, contractAddress, newValue) {
     gas: 500000
   };
 
-  if (chainId) params.chainId = chainId;
+  if (chainId) tx.chainId = chainId;
 
   let signedTx = new Tx(tx);
   // hdwallet privateKey doesnt need the 0x removed
