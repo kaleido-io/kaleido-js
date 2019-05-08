@@ -101,7 +101,6 @@ class ExternalSigningHandler {
     let nonce = await this.web3.eth.getTransactionCount(account.address);
 
     let params = {
-      from: account,
       nonce: '0x' + nonce.toString(16),
       gasPrice: 0,
       gas: 700000,
