@@ -10,17 +10,17 @@ const request = require('request');
 const { getContract } = require('./utils.js');
 
 const argv = require('yargs').argv;
+const verbose = argv.verbose;
 const chainId = argv.chainId;
 const hdwalletUrl = argv.hdwalletUrl;
 const hdwalletId = argv.hdwalletId;
 const hdwalletAccountIndex = argv.hdwalletAccountIndex;
 
 class ExternalSigningHandler {
-  constructor(url, contractName, verbose) {
+  constructor(url, contractName) {
     this.web3 = new Web3(new Web3.providers.HttpProvider(url));
     this.url = url;
     this.contractName = contractName;
-    this.verbose = verbose;
   }
 
   isHDWallet() {
@@ -61,6 +61,9 @@ class ExternalSigningHandler {
   }
 
   async deployContract(privateFor) {
+    if (privateFor)
+      throw new Error('Private transactions are not supported with external signing');
+
     let theContract = getContract(this.web3, this.contractName);
     let callData = theContract.encodeABI();
 
@@ -73,6 +76,9 @@ class ExternalSigningHandler {
   }
 
   async sendTransaction(contractAddress, newValue, privateFor) {
+    if (privateFor)
+      throw new Error('Private transactions are not supported with external signing');
+
     let theContract = getContract(this.web3, this.contractName, contractAddress);
     const abi = theContract.options.jsonInterface;
     const func = abi.find(f => f.name === 'set');
@@ -121,7 +127,7 @@ class ExternalSigningHandler {
 
     this.web3.eth.sendSignedTransaction(payload)
     .on('receipt', (receipt) => {
-      if (this.verbose)
+      if (verbose)
         console.log(receipt);
     })
     .on('error', (err) => {

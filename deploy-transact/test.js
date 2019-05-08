@@ -10,7 +10,6 @@ const { getContract } = require('./lib/utils.js');
 
 const contractAddress = argv.contract;
 const url = argv.url;
-const verbose = argv.verbose;
 const query = argv.query;
 const deploy = argv.deploy;
 const set = argv.set;
@@ -20,10 +19,10 @@ const externallySign = argv.sign;
 let contractName = 'simplestorage';
 
 const NodeSigner = require('./lib/node-signing.js');
-const nodeSigner = new NodeSigner(url, contractName, verbose);
+const nodeSigner = new NodeSigner(url, contractName);
 
 const ExternalSigner = require('./lib/ext-signing.js');
-const extSigner = new ExternalSigner(url, contractName, verbose);
+const extSigner = new ExternalSigner(url, contractName);
 
 if (query) {
   // must also pass in the contract address

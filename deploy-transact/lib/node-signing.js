@@ -2,13 +2,14 @@
 
 const Web3 = require('web3');
 const { getContract } = require('./utils.js');
+const argv = require('yargs').argv;
+const verbose = argv.verbose;
 
 class NodeSigningHandler {
-  constructor(url, contractName, verbose) {
+  constructor(url, contractName) {
     this.web3 = new Web3(new Web3.providers.HttpProvider(url));
     this.url = url;
     this.contractName = contractName;
-    this.verbose = verbose;
   }
 
   async getAccount() {
@@ -40,7 +41,7 @@ class NodeSigningHandler {
     console.log('=> Deploying smart contract');
     theContract.send(params)
     .on('receipt', (receipt) => {
-      if (this.verbose)
+      if (verbose)
         console.log(receipt);
     })
     .on('error', (err) => {
