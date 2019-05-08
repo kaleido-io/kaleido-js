@@ -117,8 +117,7 @@ class ExternalSigningHandler {
 
     console.log(`=> Externally signing the contract deploy`);
 
-    let privateKey = Buffer.from(this.isHDWallet() ? account.privateKey : account.privateKey.slice(2), 'hex');
-    signedTx.sign(privateKey);
+    signedTx = await this.signTx(signedTx, account);
     let serializedTx = signedTx.serialize();
 
     let payload = '0x' + serializedTx.toString('hex');
@@ -134,6 +133,12 @@ class ExternalSigningHandler {
       process.exit(1);
     })
     .then(callback);
+  }
+
+  signTx(signedTx, account) {
+    let privateKey = Buffer.from(this.isHDWallet() ? account.privateKey : account.privateKey.slice(2), 'hex');
+    signedTx.sign(privateKey);
+    return Promise.resolve(signedTx);
   }
 }
 

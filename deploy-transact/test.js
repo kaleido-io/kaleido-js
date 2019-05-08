@@ -15,14 +15,9 @@ const deploy = argv.deploy;
 const set = argv.set;
 const privateFor = argv.privateFor;
 const externallySign = argv.sign;
+const azure = argv.azure;
 
 let contractName = 'simplestorage';
-
-const NodeSigner = require('./lib/node-signing.js');
-const nodeSigner = new NodeSigner(url, contractName);
-
-const ExternalSigner = require('./lib/ext-signing.js');
-const extSigner = new ExternalSigner(url, contractName);
 
 if (query) {
   // must also pass in the contract address
@@ -40,6 +35,7 @@ if (query) {
     console.log('\tSmart contract current state: %j', value);
     console.log('\nDONE!\n');
   });
+
 } else if (set) {
   // must also pass in the contract address
   if (!contractAddress) {
@@ -48,17 +44,21 @@ if (query) {
   }
 
   let newValue = set;
+  getSigner().sendTransaction(contractAddress, newValue, privateFor);
 
-  if (externallySign) {
-    extSigner.sendTransaction(contractAddress, newValue, privateFor);
-  } else {
-    nodeSigner.sendTransaction(contractAddress, newValue, privateFor);
-  }
 } else if (deploy) {
-  if (externallySign) {
-    extSigner.deployContract(privateFor);
-  } else {
-    nodeSigner.deployContract(privateFor);
-  }
+  getSigner().deployContract(privateFor);
 }
 
+function getSigner() {
+  let Clazz;
+  if (externallySign) {
+    Clazz = require('./lib/ext-signing.js');
+  } else if (azure) {
+    Clazz = require('./lib/azure-signing.js');
+  } else {
+    Clazz = require('./lib/node-signing.js');
+  }
+
+  return new Clazz(url, contractName);
+}

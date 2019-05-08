@@ -40,15 +40,38 @@ node test.js --url=<url of the target node> --deploy --privateFor='["<private tr
 node test.js --url=<url of the target node> --contract=<contract address from the output above> --set=<new value> --privateFor='["<private transaction addresses>"]'
 ```
 
-### Use an external account to sign a transaction
+### Use an external account to deploy contract and sign a transaction
 ```
+node test.js --sign --url=<url of the target node> --deploy
 node test.js --sign --url=<url of the target node> --contract=<contract address from the output above> --set=<new value>
 ```
 
-### Use hdwallet account to sign a transaction
+### Use hdwallet account to deploy contract and sign a transaction
 
 **Note:** Kaleido's hdwallet service must be provisioned and a wallet created to use this option
 
 ```
+node test.js --sign --hdwalletUrl=<url of the hdwallet service> --hdwalletId=<hdwallet ID> --hdwalletAccountIndex=<account index to anonymize identity> --url=<url of the target node> --deploy
 node test.js --sign --hdwalletUrl=<url of the hdwallet service> --hdwalletId=<hdwallet ID> --hdwalletAccountIndex=<account index to anonymize identity> --url=<url of the target node> --contract=<contract address from the output above> --set=<new value>
+```
+
+### Use Azure Key Vault Signing Key to deploy contract and sign a transaction
+
+Provision a key vault resource in Azure and add a key of type "EC" using curve "SECP256K1".
+
+Register an OAuth App in the Azure Active Directory so that this test client and authenticate with the Azure API gateway.
+
+Set the following environment variables to capture the OAuth configurations:
+* CLIENT_ID: Application (client) ID
+* CLINET_SECRET: client secret
+* DIRECTORY_ID: Directory (tenant) ID
+
+The following commands use these same values for the key instance:
+* key vault resource name: eth-kv-test, it's also the first segment of the "DNS Name" https://eth-kv-test.vault.azure.net/
+* key name: eth-signing-key-1
+* key version: 3c63feb0d41d458b9c02c8d23a6b3e88
+
+```
+node test.js --azure --servicename eth-kv-test --keyname eth-signing-key-1 --keyversion 3c63feb0d41d458b9c02c8d23a6b3e88 --url <url of the target node> --deploy
+node test.js --azure --servicename eth-kv-test --keyname eth-signing-key-1 --keyversion 3c63feb0d41d458b9c02c8d23a6b3e88 --url <url of the target node> --contract <contract address from the output above> --set <new value>
 ```
