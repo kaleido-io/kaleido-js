@@ -62,9 +62,36 @@ class ExternalSigningHandler {
 
   async deployContract(privateFor) {
     let theContract = getContract(this.web3, this.contractName);
-    let deployObj = theContract.encodeABI();
+    let callData = theContract.encodeABI();
 
-    let account = await this.getAccount();
+    let callback = (newInstance) => {
+      // smart contract deployed, ready to invoke it
+      console.log(`\tSmart contract deployed, ready to take calls at "${newInstance.contractAddress}"`);
+    };
+
+    await this._sendTransaction(null, callData, callback);
+  }
+
+  async sendTransaction(contractAddress, newValue, privateFor) {
+    let theContract = getContract(this.web3, this.contractName, contractAddress);
+    const abi = theContract.options.jsonInterface;
+    const func = abi.find(f => f.name === 'set');
+    const callData = this.web3.eth.abi.encodeFunctionCall(func, ['' + newValue]); // 2nd function in the abi is the "set"
+
+    let callback = (receipt) => {
+      if (receipt.status) {
+        console.log(`\tSet new value to ${newValue}`);
+        console.log('\nDONE!\n');
+      } else {
+        console.err('\tTransaction failed');
+      }
+    };
+
+    await this._sendTransaction(contractAddress, callData, callback);
+  }
+
+  async _sendTransaction(contractAddress, callData, callback) {
+    const account = await this.getAccount();
     let nonce = await this.web3.eth.getTransactionCount(account.address);
 
     let params = {
@@ -72,10 +99,14 @@ class ExternalSigningHandler {
       nonce: '0x' + nonce.toString(16),
       gasPrice: 0,
       gas: 700000,
-      data: deployObj
+      data: callData
     };
 
-    if (chainId) params.chainId = chainId;
+    if (contractAddress)
+      params.to = contractAddress;
+
+    if (chainId)
+      params.chainId = chainId;
 
     let signedTx = new Tx(params);
 
@@ -87,62 +118,17 @@ class ExternalSigningHandler {
 
     let payload = '0x' + serializedTx.toString('hex');
     console.log(`\tSigned payload: ${payload}\n`);
+
     this.web3.eth.sendSignedTransaction(payload)
     .on('receipt', (receipt) => {
       if (this.verbose)
         console.log(receipt);
     })
     .on('error', (err) => {
-      console.error('Failed to deploy the smart contract. Error: ' + err);
+      console.error('Failed to execute the transaction. Error: ' + err);
       process.exit(1);
     })
-    .then((newInstance) => {
-      // smart contract deployed, ready to invoke it
-      console.log(`\tSmart contract deployed, ready to take calls at "${newInstance.contractAddress}"`);
-    });
-  }
-
-  async sendTransaction(contractAddress, newValue, privateFor) {
-    const account = await this.getAccount();
-    let theContract = getContract(this.web3, this.contractName, contractAddress);
-
-    const abi = theContract.options.jsonInterface;
-    const callData = this.web3.eth.abi.encodeFunctionCall(abi[1], ['' + newValue]); // 2nd function in the abi is the "set"
-    let nonce = await this.web3.eth.getTransactionCount(account.address);
-    let tx = {
-      from: account.address,
-      nonce: '0x' + nonce.toString(16),
-      to: contractAddress,
-      value: '0x0', // required eth transfer value, of course we don't deal with eth balances in private consortia
-      data: callData,
-      gas: 500000
-    };
-
-    if (chainId) tx.chainId = chainId;
-
-    let signedTx = new Tx(tx);
-
-    console.log(`=> Externally signing the transaction`);
-
-    let privateKey = Buffer.from(this.isHDWallet() ? account.privateKey : account.privateKey.slice(2), 'hex');
-    signedTx.sign(privateKey);
-    let serializedTx = signedTx.serialize();
-
-    let payload = '0x' + serializedTx.toString('hex');
-    console.log(`\tSigned payload: ${payload}\n`);
-
-    this.web3.eth.sendSignedTransaction(payload)
-    .on('receipt', (receipt) => {
-      if (this.verbose)
-        console.log(receipt);
-
-      console.log(`\tSet new value to ${newValue}`);
-      console.log('\nDONE!\n');
-    })
-    .on('error', (err) => {
-      console.error('Failed to deploy the smart contract. Error: ' + err);
-      process.exit(1);
-    });
+    .then(callback);
   }
 }
 
