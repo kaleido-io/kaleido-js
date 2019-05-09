@@ -55,6 +55,8 @@ class AzureKeyVaultSigning extends ExternalSigning {
 
   async getAccount() {
     // must be built from the raw EC public key parameters retrieved from the key vault
+    // reference: blog by Tomislav Markovski
+    // https://tomislav.tech/2018-01-31-ethereum-keyvault-generating-keys/
     let keyObject;
     try {
       keyObject = await this.client.getKey(`https://${serviceName}.vault.azure.net`, keyName, keyVersion);
@@ -75,6 +77,8 @@ class AzureKeyVaultSigning extends ExternalSigning {
     // now ask Azure to sign the hash
     let res;
 
+    // reference: blog by Tomislav Markovski
+    // https://tomislav.tech/2018-02-05-ethereum-keyvault-signing-transactions/
     try {
       // The output of this will be a 64 byte array. The first 32 are the value for R and the rest is S. 
       res = await this.client.sign(`https://${serviceName}.vault.azure.net`, keyName, keyVersion, 'ECDSA256', Buffer.from(hash));
