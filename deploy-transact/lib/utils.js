@@ -39,6 +39,22 @@ function getContract(web3, contractName, address) {
   return ret;
 }
 
+async function estimateGas(contractOrMethod, defaultValue) {
+  console.log('=> Estimating gas cost');
+  let gas;
+  try {
+    gas = await contractOrMethod.estimateGas();
+    console.log(`\t${gas} (to be inflated by 10%)`);
+    gas += Math.ceil(gas * 0.1);
+  } catch(err) {
+    console.error(`\tFailed to estimate gas, defaulting to ${defaultValue}`, err);
+    gas = defaultValue;
+  }
+  
+  return gas;
+}
+
 module.exports = {
-  getContract
+  getContract,
+  estimateGas
 };

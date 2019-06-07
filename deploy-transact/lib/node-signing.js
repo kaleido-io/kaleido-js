@@ -1,7 +1,7 @@
 'use strict';
 
 const Web3 = require('web3');
-const { getContract } = require('./utils.js');
+const { getContract, estimateGas } = require('./utils.js');
 const argv = require('yargs').argv;
 const verbose = argv.verbose;
 
@@ -14,7 +14,7 @@ class NodeSigningHandler {
 
   async getAccount() {
     console.log(`=> Connecting to target node: ${this.url}`);
-    let accounts = await this.web3.eth.personal.getAccounts();
+    let accounts = await this.web3.eth.getAccounts();
     if (!accounts || accounts.length === 0) {
       console.error("\tCan't find accounts in the target node");
       process.exit(1);
@@ -31,7 +31,7 @@ class NodeSigningHandler {
     let params = {
       from: account,
       gasPrice: 0,
-      gas: 500000
+      gas: await estimateGas(theContract, 500000)
     };
 
     if (privateFor) {
@@ -60,7 +60,7 @@ class NodeSigningHandler {
 
     let params = {
       from: account,
-      gas: 50000
+      gas: await estimateGas(theContract.methods.set(newValue), 500000)
     };
 
     if (privateFor) {

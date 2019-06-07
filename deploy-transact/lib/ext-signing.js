@@ -101,14 +101,19 @@ class ExternalSigningHandler {
     let nonce = await this.web3.eth.getTransactionCount(account.address);
 
     let params = {
-      nonce: '0x' + nonce.toString(16),
-      gasPrice: 0,
-      gas: 700000,
       data: callData
     };
 
-    if (contractAddress)
+    let defaultGas = 50000;
+    if (contractAddress) {
       params.to = contractAddress;
+      defaultGas = 500000;
+    }
+
+    params.gas = await this.estimateGas(params, defaultGas);
+
+    params.nonce = '0x' + nonce.toString(16);
+    params.gasPrice = 0;
 
     if (chainId)
       params.chainId = chainId;
@@ -139,6 +144,21 @@ class ExternalSigningHandler {
     let privateKey = Buffer.from(this.isHDWallet() ? account.privateKey : account.privateKey.slice(2), 'hex');
     signedTx.sign(privateKey);
     return Promise.resolve(signedTx);
+  }
+
+  async estimateGas(param, defaultValue) {
+    let gas;
+    try {
+      console.log('=> Estimating gas cost');
+      gas = await this.web3.eth.estimateGas(param);
+      console.log(`\t${gas} (to be inflated by 10%)`);
+      gas += Math.ceil(gas * 0.1);
+    } catch(err) {
+      console.error(`\tFailed to estimate gas, defaulting to ${defaultValue}`, err);
+      gas = defaultValue;
+    }
+    
+    return gas;
   }
 }
 
