@@ -51,7 +51,7 @@ class ExternalSigningHandler {
       } catch(err) {
         console.log("\tLocal account does not exist. Will be generated.");
         account = this.web3.eth.accounts.create();
-        const accountJSON = web3.eth.accounts.encrypt(account.privateKey, '');
+        const accountJSON = this.web3.eth.accounts.encrypt(account.privateKey, '');
         fs.writeFileSync(localAccountJSON, JSON.stringify(accountJSON));
       }
 
