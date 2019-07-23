@@ -32,12 +32,27 @@ node test.js --url=<url of the target node> --contract=<contract address from th
 ```
 node test.js --url=<url of the target node> --deploy --privateFor='["<private transaction addresses>"]'
 ```
-
 **Note:** the privateFor argument value must be delimited with single quotes, and use double quotes for each of the target private addresses, in order for the script to successfully parse
+
+### Deploy a pantheon private smart contract
+```
+node test.js --url=<url of the target node> --deploy --pantheon_private --privateFor=<private transaction addresses of receiver(s)> --privateFrom=<private transaction address of sender>
+```
+**NOTE:** List receiver addresses seperated by comma(,)
 
 ### Send a private transaction
 ```
 node test.js --url=<url of the target node> --contract=<contract address from the output above> --set=<new value> --privateFor='["<private transaction addresses>"]'
+```
+
+### Send a pantheon private transaction
+```
+node test.js --url=<url of the target node> --contract=<contract address from the output above> --set=<new value> --pantheon_private --privateFor=<private transaction addresses of receiver(s)> --privateFrom=<private transaction address of sender>
+```
+
+### Query a pantheon private transaction
+```
+node test.js --url=<url of the target node> --contract=<contract address from the output above> --query --pantheon_private --privateFor=<private transaction addresses of receiver(s)> --privateFrom=<private transaction address of sender>
 ```
 
 ### Use an external account to deploy contract and sign a transaction

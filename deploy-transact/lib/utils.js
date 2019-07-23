@@ -2,6 +2,7 @@
 
 const fs = require('fs-extra');
 const join = require('path').join;
+const solc = require('solc');
 
 function getContract(web3, contractName, address) {
   let tsSrc = fs.statSync(join(__dirname, `../contracts/${contractName}.sol`));

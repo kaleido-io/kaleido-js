@@ -12,7 +12,6 @@ const verbose = argv.verbose;
 
 class PantheonNodeSigningHandler {
   constructor(url, contractName) {
-    let rpcurl = `${url}:8555`;
     this.web3 = new EEAClient(new Web3(url), 2018);
     this.url = url;
     this.contractName = contractName;
@@ -69,7 +68,7 @@ class PantheonNodeSigningHandler {
             "from": this.account,
             "data": this.bytecode,
             "privateFrom": privateFrom,
-            "privateFor": [privateFor],
+            "privateFor": privateFor.split(','),
             "restriction": "restricted"
         }],
         "id":1
@@ -94,7 +93,6 @@ class PantheonNodeSigningHandler {
 
   async sendTransaction(contractAddress, newValue, privateFor,privateFrom) {
     await this.getContract();
-    //const abi = theContract.options.jsonInterface;
     const func = this.abi.find(f => f.name === 'set');
     console.log(func);
     const callData = this.web3.eth.abi.encodeFunctionCall(func, ['' + newValue]);

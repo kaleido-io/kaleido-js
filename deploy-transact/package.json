@@ -12,8 +12,9 @@
         "azure-keyvault": "^3.0.4",
         "ethereumjs-tx": "^1.3.3",
         "fs-extra": "^7.0.0",
-        "solc": "^0.4.25",
-        "web3": "^1.0.0-beta.34",
+        "solc": "^0.4.26",
+        "web3": "1.0.0-beta.55",
+        "web3-eea": "^0.7.0",
         "web3-utils": "^1.0.0-beta.54",
         "yargs": "^11.0.0"
     }

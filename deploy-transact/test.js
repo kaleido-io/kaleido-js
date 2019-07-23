@@ -17,7 +17,7 @@ const privateFor = argv.privateFor;
 const privateFrom = argv.privateFrom;
 const externallySign = argv.sign;
 const azure = argv.azure;
-const pantheon_private = argv.orion;
+const pantheon_private = argv.pantheon_private;
 
 let contractName = 'simplestorage';
 
