@@ -1,6 +1,5 @@
 'use strict';
 
-
 const EEAClient = require("web3-eea");
 const Web3 = require('web3');
 const axios = require('axios');
@@ -9,55 +8,23 @@ const join = require('path').join;
 const fs = require('fs-extra');
 const argv = require('yargs').argv;
 const verbose = argv.verbose;
+const { getContract }= require('./utils.js');
+const NodeSigning = require('./node-signing.js');
 
-class PantheonNodeSigningHandler {
+class PantheonNodeSigningHandler extends NodeSigning{
   constructor(url, contractName) {
+    super(url,contractName);
     this.web3 = new EEAClient(new Web3(url), 2018);
-    this.url = url;
-    this.contractName = contractName;
     this.abi;
     this.bytecode;
     this.account;
   }
 
- async getContract(){
-    this.account = await this.getAccount();
-    let tsSrc = fs.statSync(join(__dirname, `../contracts/${this.contractName}.sol`));
-    let tsBin;
-    try {
-        tsBin = fs.statSync(join(__dirname, `../contracts/${this.contractName}.bin`));
-    } catch(err) {
-        console.log("Compiled contract does not exist. Will be generated.");
-    }
-    let compiled;
-    if (!tsBin || tsSrc.mtimeMs > tsBin.mtimeMs) {
-        // source file has been modified since the last compile
-        let data = fs.readFileSync(join(__dirname, `../contracts/${this.contractName}.sol`));
-        compiled = solc.compile(data.toString(), 1);
-        fs.writeFileSync(join(__dirname, `../contracts/${this.contractName}.bin`), JSON.stringify(compiled));
-    } else {
-        compiled = JSON.parse(fs.readFileSync(join(__dirname, `../contracts/${this.contractName}.bin`)).toString());
-    }
-
-    let contract = compiled.contracts[`:${this.contractName}`];
-    this.abi = JSON.parse(contract.interface);
-    this.bytecode = '0x' + contract.bytecode;
-  }
-
-  async getAccount() {
-    console.log(`=> Connecting to target node: ${this.url}`);
-    let accounts = await this.web3.eth.getAccounts();
-    if (!accounts || accounts.length === 0) {
-      console.error("\tCan't find accounts in the target node");
-      process.exit(1);
-    }
-
-    console.log(`\tFound account in the target node: ${accounts[0]}`);
-    return accounts[0];
-  }
-
   async deployContract(privateFor,privateFrom) {
-    await this.getContract();
+    this.account = await this.getAccount();
+    let contractDetails = await getContract(null,this.contractName,null,true);
+    this.abi = contractDetails.abi;
+    this.bytecode = contractDetails.bytecode;
     let rpcInstance = axios.create({
         baseURL: `${this.url}`,
       });
@@ -86,13 +53,16 @@ class PantheonNodeSigningHandler {
         }
         console.log(`\tSmart contract deployed, ready to take calls at "${txReceipt.contractAddress}"`);
     }catch(error){
-        console.error('\tFailed tooo deploy the smart contract. Error: ' + error);
+        console.error('\tFailed to deploy the smart contract. Error: ' + error);
         process.exit(1);
     }
   }
 
   async sendTransaction(contractAddress, newValue, privateFor,privateFrom) {
-    await this.getContract();
+    this.account = await this.getAccount();
+    let contractDetails = await getContract(null,this.contractName,null,true);
+    this.abi = contractDetails.abi;
+    this.bytecode = contractDetails.bytecode;
     const func = this.abi.find(f => f.name === 'set');
     console.log(func);
     const callData = this.web3.eth.abi.encodeFunctionCall(func, ['' + newValue]);
@@ -134,9 +104,10 @@ class PantheonNodeSigningHandler {
   }
 
   async queryTransaction(contractAddress, privateFor, privateFrom) {
-
-    console.log(`=> Calling smart contract at "${contractAddress}" for current state value`);
-    await this.getContract();
+    this.account = await this.getAccount();
+    let contractDetails = await getContract(null,this.contractName,null,true);
+    this.abi = contractDetails.abi;
+    this.bytecode = contractDetails.bytecode;
     const func = this.abi.find(f => f.name === 'query');
     const callData = this.web3.eth.abi.encodeFunctionCall(func,[]);
     let rpcInstance = axios.create({
@@ -155,6 +126,7 @@ class PantheonNodeSigningHandler {
         }],
         "id":1
     };
+    console.log(`=> Calling smart contract at "${contractAddress}" for current state value`);
     try{
         let res = await rpcInstance.post('', body);
         if(verbose){
