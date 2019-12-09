@@ -4,7 +4,7 @@ const fs = require('fs-extra');
 const join = require('path').join;
 const solc = require('solc');
 
-function getContract(web3, contractName, address,pantheon_private=false) {
+function getContract(web3, contractName, address, besu_private=false) {
   let tsSrc = fs.statSync(join(__dirname, `../contracts/${contractName}.sol`));
   let tsBin;
 
@@ -28,7 +28,7 @@ function getContract(web3, contractName, address,pantheon_private=false) {
   let abi = JSON.parse(contract.interface);
   let bytecode = '0x' + contract.bytecode;
 
-  if(pantheon_private){
+  if(besu_private){
     return {"bytecode":bytecode,"abi":abi};
   }
 
