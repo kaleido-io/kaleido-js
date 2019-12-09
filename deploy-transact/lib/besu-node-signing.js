@@ -47,7 +47,7 @@ class PantheonNodeSigningHandler extends NodeSigning{
             console.log(`Received repsonse`,res.data);
         }
         let txHash = res.data.result;
-        let txReceipt = await this.web3.eea.getTransactionReceipt(txHash, privateFrom);
+        let txReceipt = await this.web3.priv.getTransactionReceipt(txHash, privateFrom);
         if(verbose){
             console.log(`Transaction receipt`,txReceipt);
         }
@@ -91,7 +91,7 @@ class PantheonNodeSigningHandler extends NodeSigning{
             console.log(`Received repsonse`,res.data);
         }
         let txHash = res.data.result;
-        let txReceipt = await this.web3.eea.getTransactionReceipt(txHash, privateFrom);
+        let txReceipt = await this.web3.priv.getTransactionReceipt(txHash, privateFrom);
         if(verbose){
             console.log(`Transaction receipt`,txReceipt);
         }
@@ -133,7 +133,7 @@ class PantheonNodeSigningHandler extends NodeSigning{
             console.log(`Received repsonse`,res.data);
         }
         let txHash = res.data.result;
-        let txReceipt = await this.web3.eea.getTransactionReceipt(txHash, privateFrom);
+        let txReceipt = await this.web3.priv.getTransactionReceipt(txHash, privateFrom);
         let value = txReceipt.output;
         console.log('\tSmart contract current state: %j', value);
         console.log('\nDONE!\n');
