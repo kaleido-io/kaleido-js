@@ -64,9 +64,7 @@ class PantheonNodeSigningHandler extends NodeSigning{
     this.abi = contractDetails.abi;
     this.bytecode = contractDetails.bytecode;
     const func = this.abi.find(f => f.name === 'set');
-    console.log(func);
     const callData = this.web3.eth.abi.encodeFunctionCall(func, ['' + newValue]);
-    console.log(callData);
 
     let rpcInstance = axios.create({
         baseURL: `${this.url}`,
@@ -79,7 +77,7 @@ class PantheonNodeSigningHandler extends NodeSigning{
             "to": contractAddress,
             "data": callData,
             "privateFrom": privateFrom,
-            "privateFor": [privateFor],
+            "privateFor": privateFor.split(','),
             "restriction": "restricted"
         }],
         "id":1
@@ -121,7 +119,7 @@ class PantheonNodeSigningHandler extends NodeSigning{
             "to": contractAddress,
             "data": callData,
             "privateFrom": privateFrom,
-            "privateFor": [privateFor],
+            "privateFor": privateFor.split(','),
             "restriction": "restricted"
         }],
         "id":1
