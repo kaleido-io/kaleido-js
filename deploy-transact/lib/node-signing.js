@@ -68,9 +68,31 @@ class NodeSigningHandler {
     }
 
     console.log('=> Setting state to new value');
-    await theContract.methods.set(newValue).send(params);
+    let receipt = await theContract.methods.set(newValue).send(params);
+    if (verbose)
+      console.log(receipt);
 
     console.log(`\tNew value set to: ${newValue}`);
+    console.log('\nDONE!\n');
+  }
+
+  async getTransactionOutput(contractAddress, newValue) {
+    let theContract = getContract(this.web3, this.contractName, contractAddress);
+    let account = await this.getAccount();
+
+    let params = {
+      from: account,
+      gas: await estimateGas(theContract.methods.set(newValue), 500000)
+    };
+
+    console.log('=> Setting state to new value');
+    try {
+      let output = await theContract.methods.set(newValue).call(params);
+      console.log(`\teth_call output: ${JSON.stringify(output, null, 2)}`);
+    } catch(err) {
+      console.err(err);
+    }
+
     console.log('\nDONE!\n');
   }
 }
