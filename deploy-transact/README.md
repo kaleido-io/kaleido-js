@@ -1,4 +1,4 @@
-# Simple node.js example of Geth/Quorum programming
+# Simple node.js example of Geth/Quorum/Besu transaction submission
 
 ### Run it:
 ```
@@ -34,9 +34,9 @@ node test.js --url=<url of the target node> --deploy --privateFor='["<private tr
 ```
 **Note:** the privateFor argument value must be delimited with single quotes, and use double quotes for each of the target private addresses, in order for the script to successfully parse
 
-### Deploy a pantheon private smart contract
+### Deploy a private smart contract to a Besu node
 ```
-node test.js --url=<url of the target node> --deploy --pantheon_private --privateFor=<private transaction addresses of receiver(s)> --privateFrom=<private transaction address of sender>
+node test.js --url=<url of the target node> --deploy --besu_private --privateFor=<private transaction addresses of receiver(s)> --privateFrom=<private transaction address of sender>
 ```
 **NOTE:** List receiver addresses seperated by comma(,)
 
@@ -45,14 +45,14 @@ node test.js --url=<url of the target node> --deploy --pantheon_private --privat
 node test.js --url=<url of the target node> --contract=<contract address from the output above> --set=<new value> --privateFor='["<private transaction addresses>"]'
 ```
 
-### Send a pantheon private transaction
+### Send a private transaction to a Besu node
 ```
-node test.js --url=<url of the target node> --contract=<contract address from the output above> --set=<new value> --pantheon_private --privateFor=<private transaction addresses of receiver(s)> --privateFrom=<private transaction address of sender>
+node test.js --url=<url of the target node> --contract=<contract address from the output above> --set=<new value> --besu_private --privateFor=<private transaction addresses of receiver(s)> --privateFrom=<private transaction address of sender>
 ```
 
-### Query a pantheon private transaction
+### Query a private transaction from a Besu node
 ```
-node test.js --url=<url of the target node> --contract=<contract address from the output above> --query --pantheon_private --privateFor=<private transaction addresses of receiver(s)> --privateFrom=<private transaction address of sender>
+node test.js --url=<url of the target node> --contract=<contract address from the output above> --query --besu_private --privateFor=<private transaction addresses of receiver(s)> --privateFrom=<private transaction address of sender>
 ```
 
 ### Use an external account to deploy contract and sign a transaction

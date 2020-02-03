@@ -17,12 +17,12 @@ const privateFor = argv.privateFor;
 const privateFrom = argv.privateFrom;
 const externallySign = argv.sign;
 const azure = argv.azure;
-const pantheon_private = argv.pantheon_private;
+const besu_private = argv.besu_private;
 
 let contractName = 'simplestorage';
 
 if (query) {
-  if(pantheon_private){
+  if(besu_private){
     getSigner().queryTransaction(contractAddress, privateFor, privateFrom);
 
   }else{
@@ -63,8 +63,8 @@ function getSigner() {
     Clazz = require('./lib/ext-signing.js');
   } else if (azure) {
     Clazz = require('./lib/azure-signing.js');
-  } else if(pantheon_private){
-    Clazz = require('./lib/pantheon-node-signing.js');
+  } else if(besu_private){
+    Clazz = require('./lib/besu-node-signing.js');
   }else {
     Clazz = require('./lib/node-signing.js');
   }
