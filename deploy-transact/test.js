@@ -10,6 +10,7 @@ const { getContract } = require('./lib/utils.js');
 
 const contractAddress = argv.contract;
 const url = argv.url;
+const ws = argv.ws;
 const query = argv.query;
 const deploy = argv.deploy;
 const set = argv.set;
@@ -22,10 +23,10 @@ const besu_private = argv.besu_private;
 let contractName = 'simplestorage';
 
 if (query) {
-  if(besu_private){
+  if (besu_private) {
     getSigner().queryTransaction(contractAddress, privateFor, privateFrom);
 
-  }else{
+  } else {
     // must also pass in the contract address
     if (!contractAddress) {
       console.error('For querying smart contract states, you must pass in the contract address using the "--contract=" argument');
@@ -52,6 +53,7 @@ if (query) {
 
     let newValue = set;
     getSigner().sendTransaction(contractAddress, newValue, privateFor, privateFrom);
+    listen();
 
 } else if (deploy) {
     getSigner().deployContract(privateFor,privateFrom);
@@ -70,4 +72,17 @@ function getSigner() {
   }
 
   return new Clazz(url, contractName);
+}
+
+function listen() {
+  if (ws) {
+    let web3 = new Web3(new Web3.providers.WebsocketProvider(ws));
+    let theContract = getContract(web3, contractName, contractAddress);
+    theContract.once('DataStored', (err, event) => {
+      if (err)
+        console.error('Error subscribing to "DataStored" events', err);
+      else
+        console.log('Event published', event);
+    });
+  }
 }

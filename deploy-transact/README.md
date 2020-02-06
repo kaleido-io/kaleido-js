@@ -28,6 +28,11 @@ node test.js --url=<url of the target node> --contract=<contract address from th
 node test.js --url=<url of the target node> --contract=<contract address from the output above> --set=<new value>
 ```
 
+### Print out the DataStored event
+```
+node test.js --url=<url of the target node> --ws=<ws:// URL for the websocket connection> --contract=<contract address from the output above> --set=<new value>
+```
+
 ### Deploy a private smart contract
 ```
 node test.js --url=<url of the target node> --deploy --privateFor='["<private transaction addresses>"]'
