@@ -18,9 +18,10 @@ const privateFor = argv.privateFor;
 const privateFrom = argv.privateFrom;
 const externallySign = argv.sign;
 const azure = argv.azure;
+const vault = argv.vault;
 const besu_private = argv.besu_private;
 
-let contractName = 'simplestorage';
+let contractName = argv.contractName || 'simplestorage';
 
 if (query) {
   if (besu_private) {
@@ -52,8 +53,8 @@ if (query) {
     }
 
     let newValue = set;
-    getSigner().sendTransaction(contractAddress, newValue, privateFor, privateFrom);
     listen();
+    getSigner().sendTransaction(contractAddress, newValue, privateFor, privateFrom);
 
 } else if (deploy) {
     getSigner().deployContract(privateFor,privateFrom);
@@ -67,22 +68,38 @@ function getSigner() {
     Clazz = require('./lib/azure-signing.js');
   } else if(besu_private){
     Clazz = require('./lib/besu-node-signing.js');
-  }else {
+  } else if (vault) {
+    Clazz = require('./lib/vault-signing.js');
+  } else {
     Clazz = require('./lib/node-signing.js');
   }
 
   return new Clazz(url, contractName);
 }
 
-function listen() {
+async function listen() {
   if (ws) {
-    let web3 = new Web3(new Web3.providers.WebsocketProvider(ws));
-    let theContract = getContract(web3, contractName, contractAddress);
-    theContract.once('DataStored', (err, event) => {
+    let provider = new Web3.providers.WebsocketProvider(ws);
+    let web3 = new Web3(provider);
+    let currentBlock = await web3.eth.getBlockNumber();
+    console.log("Current block", currentBlock);
+    let subscription = web3.eth.subscribe("logs", {}, (err, result) => {
       if (err)
-        console.error('Error subscribing to "DataStored" events', err);
+        console.error('Error subscribing to "logs" events', err);
       else
-        console.log('Event published', event);
+        console.log('Subscription created', result);
+    })
+    .on("data", log => {
+      console.log("Data received", log);
+      subscription.unsubscribe((err, success) => {
+        if (err) {
+          console.log("Failed to unsubscribe", err);
+          process.exit(1);
+        } else {
+          console.log("Successfully unsubscribed, exiting");
+          provider.disconnect();
+        }
+      })
     });
   }
 }

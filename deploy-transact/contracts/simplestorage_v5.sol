@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-contract simplestorage {
+contract simplestorage_v5 {
    uint public storedData;
 
    event DataStored (
