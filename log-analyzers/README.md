@@ -10,7 +10,10 @@ Parses logs from the Quorum and Geth nodes and generate charts for these metrics
 
 ## Run It
 
+Due to a security vulnerability in a dependency of the latest version of plotly, it's not included in the package.json. Make sure to install it manually as shown below.
+
 ```
+npm install plotly
 npm install
 PLOT_USER=<plotly.com user> PLOT_PWD=<plotly.com app key> INPUT=<the geth.log file> node geth-poa-logs.js
 ```

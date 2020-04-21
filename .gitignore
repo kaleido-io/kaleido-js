@@ -2,3 +2,4 @@ node_modules/
 deploy-transact/*.bin
 deploy-transact/package-lock.json
 deploy-transact/contracts/*.bin
+log-analyzers/package-lock.json
