@@ -19,12 +19,19 @@ const privateFrom = argv.privateFrom;
 const externallySign = argv.sign;
 const azure = argv.azure;
 const besu_private = argv.besu_private;
+const privacy_groups = argv.privacy_groups;
+const find = argv.find;
+const create = argv.create;
+const destroy = argv.destroy;
 
+const addresses = argv.addresses;
+// besu privacy group
+const privacyGroupId = argv.privacyGroupId;
 let contractName = 'simplestorage';
 
 if (query) {
   if (besu_private) {
-    getSigner().queryTransaction(contractAddress, privateFor, privateFrom);
+    getSigner().queryTransaction(contractAddress, privateFor, privateFrom, privacyGroupId);
 
   } else {
     // must also pass in the contract address
@@ -52,11 +59,26 @@ if (query) {
     }
 
     let newValue = set;
-    getSigner().sendTransaction(contractAddress, newValue, privateFor, privateFrom);
+    if(besu_private) {
+      getSigner().sendTransaction(contractAddress, newValue, privateFor, privateFrom, privacyGroupId);
+    } else {
+      getSigner().sendTransaction(contractAddress, newValue, privateFor, privateFrom);
+    }
     listen();
 
 } else if (deploy) {
-    getSigner().deployContract(privateFor,privateFrom);
+    if(besu_private) {
+      getSigner().deployContract(privateFor,privateFrom,privacyGroupId);
+    } else {
+      getSigner().deployContract(privateFor,privateFrom);
+    }
+} else if(besu_private && privacy_groups) {
+  if(find)
+    getSigner().getPrivacyGroups(addresses);
+  if(create)
+    getSigner().createPrivacyGroup(addresses);
+  if(destroy)
+    getSigner().deletePrivacyGroup(privacyGroupId);
 }
 
 function getSigner() {
