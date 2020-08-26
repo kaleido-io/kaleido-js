@@ -64,7 +64,7 @@ node test.js --url=<url of the target node> --deploy --besu_private --privateFor
 
 Using privacy group id
 ```
-node test.js --url=<url of the target node> --deploy --besu_private --privateGroupId=<privacy group id> --privateFrom=<private transaction address of sender>
+node test.js --url=<url of the target node> --deploy --besu_private --privateGroupId=<privacy group id> --privateFrom=<private transaction address of sender> --chainId=<chain id of environment>
 ```
 **NOTE:** List receiver addresses seperated by comma(,)
 
@@ -80,7 +80,7 @@ node test.js --url=<url of the target node> --contract=<contract address from th
 
 Using privacy group id
 ```
-node test.js --url=<url of the target node> --contract=<contract address from the output above> --set=<new value> --besu_private --privateGroupId=<privacy group id> --privateFrom=<private transaction address of sender>
+node test.js --url=<url of the target node> --contract=<contract address from the output above> --set=<new value> --besu_private --privateGroupId=<privacy group id> --privateFrom=<private transaction address of sender> --chainId=<chain id of environment>
 ```
 
 ### Query a private transaction from a Besu node
