@@ -1,13 +1,24 @@
 'use strict';
 
 const Web3 = require('web3');
-const { getContract, estimateGas } = require('./utils.js');
+const https = require('https');
+const { getContract, estimateGas, getChainId } = require('./utils.js');
 const argv = require('yargs').argv;
 const verbose = argv.verbose;
 
 class NodeSigningHandler {
   constructor(url, contractName) {
-    this.web3 = new Web3(new Web3.providers.HttpProvider(url));
+    const web3agent = https.Agent({
+      keepAlive: true,
+      maxSocket: 5,
+    });
+
+    const options = {
+        agent: {
+            https: web3agent,
+        }
+    };
+    this.web3 = new Web3(new Web3.providers.HttpProvider(url, options));
     this.url = url;
     this.contractName = contractName;
   }
@@ -31,7 +42,9 @@ class NodeSigningHandler {
     let params = {
       from: account,
       gasPrice: 0,
-      gas: await estimateGas(theContract, 500000)
+      gas: await estimateGas(theContract, 500000),
+      transactionConfirmationBlocks: 1,
+      chain: await getChainId(this.web3),
     };
 
     if (privateFor) {
@@ -68,12 +81,18 @@ class NodeSigningHandler {
     }
 
     console.log('=> Setting state to new value');
-    let receipt = await theContract.methods.set(newValue).send(params);
-    if (verbose)
-      console.log(receipt);
+    theContract.methods.set(newValue).send(params)
+      .on('receipt', (receipt) => {
+        if (verbose)
+          console.log(receipt);
+        console.log(`\tNew value set to: ${newValue}`);
+        console.log('\n\tDONE!\n');
+      })
+      .on('error', (err, receipt) => {
+        console.error(`\tTransaction failed ${JSON.stringify(receipt)}. Error: ${err.toString()}`);
+        process.exit(1);
+      });
 
-    console.log(`\tNew value set to: ${newValue}`);
-    console.log('\nDONE!\n');
   }
 
   async getTransactionOutput(contractAddress, newValue) {
@@ -85,13 +104,16 @@ class NodeSigningHandler {
       gas: await estimateGas(theContract.methods.set(newValue), 500000)
     };
 
-    console.log('=> Setting state to new value');
-    try {
-      let output = await theContract.methods.set(newValue).call(params);
-      console.log(`\teth_call output: ${JSON.stringify(output, null, 2)}`);
-    } catch(err) {
-      console.err(err);
-    }
+    console.log('=> Invoking eth_call with new value');
+    theContract.methods.set(newValue).call(params)
+      .on('error', (err) => {
+        console.error(`\teth_call failed, Error: ${err.toString()}`);
+        process.exit(1);
+      })
+      .then((result) => {
+        console.log(`\tNew value set to: ${JSON.stringify(result, null, 2)}`);
+        console.log('\n\tDONE!\n');
+      })
 
     console.log('\nDONE!\n');
   }
