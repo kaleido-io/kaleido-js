@@ -1,4 +1,4 @@
-pragma solidity ^0.4.17;
+pragma solidity ^0.5.2;
 
 contract simplestorage {
    uint public storedData;
@@ -7,7 +7,7 @@ contract simplestorage {
       uint data
    );
 
-   function simplestorage(uint initVal) public {
+   constructor(uint initVal) public {
       storedData = initVal;
    }
 
@@ -20,11 +20,11 @@ contract simplestorage {
       return storedData;
    }
 
-   function get() public constant returns (uint retVal) {
+   function get() view public returns (uint retVal) {
       return storedData;
    }
 
-   function query() public constant returns (uint retVal) {
+   function query() view public returns (uint retVal) {
       return storedData;
    }
 }

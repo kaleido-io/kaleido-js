@@ -17,16 +17,36 @@ function getContract(web3, contractName, address, besu_private=false) {
   let compiled;
   if (!tsBin || tsSrc.mtimeMs > tsBin.mtimeMs) {
     // source file has been modified since the last compile
-    let data = fs.readFileSync(join(__dirname, `../contracts/${contractName}.sol`));
-    compiled = solc.compile(data.toString(), 1);
+    let data = fs.readFileSync(join(__dirname, `../contracts/${contractName}.sol`), 'utf8');
+    let input = {
+      language:  'Solidity',
+      sources: {},
+      settings: {
+        outputSelection: {
+          '*': {
+            '*': ['*']
+          }
+        }
+      }
+    };
+    input.sources[`${contractName}.sol`] = {
+      content: data
+    };
+
+    try {
+      compiled = JSON.parse(solc.compile(JSON.stringify(input)));
+    } catch(err) {
+      console.log(`Could not compile ${JSON.stringify(err)}`);
+    }
+
     fs.writeFileSync(join(__dirname, `../contracts/${contractName}.bin`), JSON.stringify(compiled));
   } else {
-    compiled = JSON.parse(fs.readFileSync(join(__dirname, `../contracts/${contractName}.bin`)).toString());
+    compiled = JSON.parse(fs.readFileSync(join(__dirname, `../contracts/${contractName}.bin`), 'utf8').toString());
   }
 
-  let contract = compiled.contracts[`:${contractName}`];
-  let abi = JSON.parse(contract.interface);
-  let bytecode = '0x' + contract.bytecode;
+  let contract = compiled.contracts[`${contractName}.sol`][`${contractName}`];
+  let abi = contract.abi;
+  let bytecode = '0x' + contract.evm.bytecode.object;
 
   if(besu_private){
     return {"bytecode":bytecode,"abi":abi};
@@ -45,7 +65,6 @@ function getContract(web3, contractName, address, besu_private=false) {
 }
 
 async function estimateGas(contractOrMethod, defaultValue) {
-  console.log('=> Estimating gas cost');
   let gas;
   try {
     gas = await contractOrMethod.estimateGas();
@@ -55,11 +74,18 @@ async function estimateGas(contractOrMethod, defaultValue) {
     console.error(`\tFailed to estimate gas, defaulting to ${defaultValue}`, err);
     gas = defaultValue;
   }
-  
+  console.log('=> Estimated gas cost', gas);
   return gas;
+}
+
+async function getChainId(web3) {
+  let id = await web3.eth.net.getId();
+  console.log(`=> Chain ID: ${id}`);
+  return id;
 }
 
 module.exports = {
   getContract,
-  estimateGas
+  estimateGas,
+  getChainId
 };

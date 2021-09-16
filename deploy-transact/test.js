@@ -1,11 +1,13 @@
 'use strict';
 
-const argv = require('yargs').argv;
+const yargs = require('yargs/yargs');
+const { hideBin } = require('yargs/helpers');
+const argv = yargs(hideBin(process.argv))
+  .option('contract', {
+    type: 'string'
+  }).argv;
 const Web3 = require('web3');
-const solc = require('solc');
-const fs = require('fs-extra');
-const os = require('os');
-const path = require('path');
+const https = require('https');
 const { getContract } = require('./lib/utils.js');
 
 const contractAddress = argv.contract;
@@ -98,7 +100,18 @@ function getSigner() {
 
 function listen() {
   if (ws) {
-    let web3 = new Web3(new Web3.providers.WebsocketProvider(ws));
+    const web3agent = https.Agent({
+      keepAlive: true,
+      maxSocket: 5,
+    });
+
+    const options = {
+        agent: {
+            https: web3agent,
+        }
+    };
+
+    let web3 = new Web3(new Web3.providers.WebsocketProvider(ws, options));
     let theContract = getContract(web3, contractName, contractAddress);
     theContract.once('DataStored', (err, event) => {
       if (err)
