@@ -42,6 +42,7 @@ class PantheonNodeSigningHandler extends NodeSigning{
   }
 
   async createPrivacyGroup(addresses){
+      console.log(`Supplied addresses: ${addresses.split(',')}`);
     let res = await this.web3.priv.createPrivacyGroup({
         addresses: addresses.split(',')
     });
@@ -56,6 +57,7 @@ class PantheonNodeSigningHandler extends NodeSigning{
   }
 
   async deployContract(privateFor,privateFrom,privacyGroupId=undefined) {
+    console.log(`Deploying contract.. PrivateFor: ${privateFor}, PrivateFrom: ${privateFrom}, Privacy group ID ${privacyGroupId}.`);
     this.account = await this.getAccount();
     let contractDetails = await getContract(null,this.contractName,null,true);
     this.abi = contractDetails.abi;
@@ -101,6 +103,7 @@ class PantheonNodeSigningHandler extends NodeSigning{
   }
 
   async sendTransaction(contractAddress, newValue, privateFor,privateFrom, privacyGroupId=undefined) {
+    console.log(`Send Transaction.. PrivateFor: ${privateFor}, PrivateFrom: ${privateFrom}, Privacy group ID ${privacyGroupId}.`);
     this.account = await this.getAccount();
     let contractDetails = await getContract(null,this.contractName,null,true);
     this.abi = contractDetails.abi;
